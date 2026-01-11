@@ -22,3 +22,36 @@ enum MovieStatus {
   NOW_SHOWING
   ENDED
 }
+
+model Cinema {
+  id        String   @id @default(uuid())
+  name      String
+  city      String
+  address   String?
+  halls     Hall[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Hall {
+  id         String    @id @default(uuid())
+  name       String
+  totalSeats Int
+  cinemaId   String
+  cinema     Cinema   @relation(fields: [cinemaId], references: [id])
+  showtimes  Showtime[]
+  createdAt  DateTime @default(now())
+}
+
+model Showtime {
+  id          String   @id @default(uuid())
+  movieId     String
+  hallId      String
+  hall        Hall     @relation(fields: [hallId], references: [id])
+  startTime   DateTime
+  endTime     DateTime
+  priceConfig Json
+  createdAt   DateTime @default(now())
+
+  @@index([hallId, startTime])
+}

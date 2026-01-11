@@ -4,6 +4,8 @@ import { AppService } from './app.service';
 import { MoviesModule } from './movies/movies.module';
 import { PrismaModule } from 'prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
+import { CinemasModule } from './cinemas/cinemas.module';
+import { HallsModule } from './halls/halls.module';
 
 @Module({
   imports: [
@@ -13,6 +15,8 @@ import { ConfigModule } from '@nestjs/config';
     }),
     MoviesModule,
     PrismaModule,
+    CinemasModule,
+    HallsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
