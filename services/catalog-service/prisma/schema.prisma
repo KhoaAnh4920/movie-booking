@@ -7,14 +7,28 @@ datasource db {
 }
 
 model Movie {
-  id              String      @id @default(uuid())
-  title           String
-  description     String?
+  id          String      @id @default(uuid())
+  title       String
+  description String?
+  status      MovieStatus
+
+  versions MovieVersion[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MovieVersion {
+  id      String @id @default(uuid())
+  movieId String
+  movie   Movie  @relation(fields: [movieId], references: [id], onDelete: Restrict)
+
+  versionType     String // IMAX | 2D | 3D | DC
   durationMinutes Int
-  releaseDate     DateTime
-  status          MovieStatus
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+
+  createdAt DateTime @default(now())
+
+  @@index([movieId])
 }
 
 enum MovieStatus {
@@ -34,24 +48,27 @@ model Cinema {
 }
 
 model Hall {
-  id         String    @id @default(uuid())
+  id         String     @id @default(uuid())
   name       String
   totalSeats Int
   cinemaId   String
-  cinema     Cinema   @relation(fields: [cinemaId], references: [id])
+  cinema     Cinema     @relation(fields: [cinemaId], references: [id])
   showtimes  Showtime[]
-  createdAt  DateTime @default(now())
+  createdAt  DateTime   @default(now())
 }
 
 model Showtime {
-  id          String   @id @default(uuid())
-  movieId     String
-  hallId      String
-  hall        Hall     @relation(fields: [hallId], references: [id])
+  id             String @id @default(uuid())
+  movieVersionId String
+
+  hallId String
+  hall   Hall   @relation(fields: [hallId], references: [id])
+
   startTime   DateTime
   endTime     DateTime
   priceConfig Json
   createdAt   DateTime @default(now())
 
   @@index([hallId, startTime])
+  @@index([movieVersionId])
 }

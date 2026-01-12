@@ -6,6 +6,8 @@ import { PrismaModule } from 'prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
 import { CinemasModule } from './cinemas/cinemas.module';
 import { HallsModule } from './halls/halls.module';
+import { MovieVersionsModule } from './movie-versions/movie-versions.module';
+import { ShowtimesModule } from './showtimes/showtimes.module';
 
 @Module({
   imports: [
@@ -17,6 +19,8 @@ import { HallsModule } from './halls/halls.module';
     PrismaModule,
     CinemasModule,
     HallsModule,
+    MovieVersionsModule,
+    ShowtimesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
