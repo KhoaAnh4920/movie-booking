@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { PrismaModule } from 'prisma/prisma.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { MoviesModule } from './movies/movies.module';
-import { PrismaModule } from 'prisma/prisma.module';
-import { ConfigModule } from '@nestjs/config';
 import { CinemasModule } from './cinemas/cinemas.module';
 import { HallsModule } from './halls/halls.module';
 import { MovieVersionsModule } from './movie-versions/movie-versions.module';
+import { MoviesModule } from './movies/movies.module';
+import { RedisModule } from './redis/redis.module';
 import { ShowtimesModule } from './showtimes/showtimes.module';
 
 @Module({
@@ -21,6 +22,7 @@ import { ShowtimesModule } from './showtimes/showtimes.module';
     HallsModule,
     MovieVersionsModule,
     ShowtimesModule,
+    RedisModule,
   ],
   controllers: [AppController],
   providers: [AppService],

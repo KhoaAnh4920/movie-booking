@@ -11,8 +11,6 @@ export class MoviesService {
       data: {
         title: dto.title,
         description: dto.description,
-        durationMinutes: dto.durationMinutes,
-        releaseDate: new Date(dto.releaseDate),
         status: dto.status,
       },
     });
