@@ -53,6 +53,7 @@ model Hall {
   totalSeats Int
   cinemaId   String
   cinema     Cinema     @relation(fields: [cinemaId], references: [id])
+  seats      Seat[]
   showtimes  Showtime[]
   createdAt  DateTime   @default(now())
 }
@@ -72,3 +73,29 @@ model Showtime {
   @@index([hallId, startTime])
   @@index([movieVersionId])
 }
+
+model Seat {
+  id         String   @id @default(uuid())
+  hallId     String
+  hall       Hall     @relation(fields: [hallId], references: [id])
+
+  rowCode    String
+  seatNumber Int
+
+  gridRow    Int
+  gridCol    Int
+
+  type       SeatType
+
+  createdAt  DateTime @default(now())
+
+  @@unique([hallId, rowCode, seatNumber])
+}
+
+
+enum SeatType {
+  STANDARD
+  VIP
+  COUPLE
+}
+
