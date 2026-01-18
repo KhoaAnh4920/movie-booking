@@ -1,14 +1,22 @@
 import {
   BadRequestException,
+  ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { CreateShowtimeDto } from './dto/create-showtime.dto';
+import { RedisService } from 'src/redis/redis.service';
+import { buildSeatLockKey } from 'src/redis/redis.helper';
+import { REDIS_SEAT_LOCK_TTL } from 'src/redis/redis.config';
 
 @Injectable()
 export class ShowtimesService {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(
+    private readonly prisma: PrismaClient,
+    private readonly redis: RedisService,
+  ) {}
 
   async create(hallId: string, dto: CreateShowtimeDto) {
     const hall = await this.prisma.hall.findUnique({
@@ -70,5 +78,84 @@ export class ShowtimesService {
         },
       },
     });
+  }
+
+  async holdSeat(showtimeId: string, seatId: string, userId: string) {
+    const showTime = await this.prisma.showtime.findUnique({
+      where: { id: showtimeId },
+    });
+
+    if (!showTime) {
+      throw new NotFoundException('Showtime not found');
+    }
+
+    const seat = await this.prisma.seat.findUnique({
+      where: { id: seatId },
+    });
+
+    if (!seat) {
+      throw new NotFoundException('Seat not found');
+    }
+
+    const redis = this.redis.getClient();
+    const key = buildSeatLockKey(showtimeId, seatId);
+
+    const result = await redis.set(
+      key,
+      userId,
+      'EX',
+      REDIS_SEAT_LOCK_TTL,
+      'NX',
+    );
+
+    if (!result) {
+      throw new ConflictException('Seat is already held');
+    }
+
+    return {
+      status: 'HELD',
+      seatId,
+      expiresIn: REDIS_SEAT_LOCK_TTL,
+    };
+  }
+
+  async releaseSeat(showtimeId: string, seatId: string, userId: string) {
+    const showTime = await this.prisma.showtime.findUnique({
+      where: { id: showtimeId },
+    });
+
+    if (!showTime) {
+      throw new NotFoundException('Showtime not found');
+    }
+
+    const seat = await this.prisma.seat.findUnique({
+      where: { id: seatId },
+    });
+
+    if (!seat) {
+      throw new NotFoundException('Seat not found');
+    }
+    const redis = this.redis.getClient();
+    const key = buildSeatLockKey(showtimeId, seatId);
+
+    const owner = await redis.get(key);
+
+    if (!owner) {
+      return {
+        status: 'RELEASED',
+        seatId,
+      };
+    }
+
+    if (owner !== userId) {
+      throw new ForbiddenException('You do not own this seat lock');
+    }
+
+    await redis.del(key);
+
+    return {
+      status: 'RELEASED',
+      seatId,
+    };
   }
 }
