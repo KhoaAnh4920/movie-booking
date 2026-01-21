@@ -9,6 +9,7 @@ import { MovieVersionsModule } from './movie-versions/movie-versions.module';
 import { MoviesModule } from './movies/movies.module';
 import { RedisModule } from './redis/redis.module';
 import { ShowtimesModule } from './showtimes/showtimes.module';
+import { InternalModule } from './internal/internal.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { ShowtimesModule } from './showtimes/showtimes.module';
     MovieVersionsModule,
     ShowtimesModule,
     RedisModule,
+    InternalModule,
   ],
   controllers: [AppController],
   providers: [AppService],

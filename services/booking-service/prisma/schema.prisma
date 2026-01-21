@@ -1,0 +1,48 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Booking {
+  id          String        @id @default(uuid())
+  userId      String
+  showtimeId  String
+
+  status      BookingStatus
+  totalAmount Decimal       @db.Decimal(19, 4)
+
+  tickets     Ticket[]
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([showtimeId])
+}
+
+model Ticket {
+  id          String   @id @default(uuid())
+  bookingId   String
+  seatId      String
+
+  seatRow     String
+  seatNumber  Int
+  price       Decimal  @db.Decimal(19, 4)
+
+  booking     Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+
+  @@index([bookingId])
+  @@index([seatId])
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+

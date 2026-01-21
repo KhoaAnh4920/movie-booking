@@ -158,4 +158,41 @@ export class ShowtimesService {
       seatId,
     };
   }
+
+  async quoteSeats(showtimeId: string, seatIds: string[]) {
+    const showtime = await this.prisma.showtime.findUnique({
+      where: { id: showtimeId },
+      include: {
+        hall: {
+          include: {
+            seats: {
+              where: { id: { in: seatIds } },
+            },
+          },
+        },
+      },
+    });
+
+    if (!showtime) {
+      throw new Error('Showtime not found');
+    }
+
+    const priceConfig = showtime.priceConfig as Record<string, number>;
+
+    const seats = showtime.hall.seats.map((seat) => ({
+      seatId: seat.id,
+      row: seat.rowCode,
+      number: seat.seatNumber,
+      type: seat.type,
+      price: priceConfig[seat.type],
+    }));
+
+    const totalAmount = seats.reduce((sum, s) => sum + s.price, 0);
+
+    return {
+      showtimeId,
+      seats,
+      totalAmount,
+    };
+  }
 }
