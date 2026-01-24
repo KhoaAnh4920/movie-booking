@@ -46,3 +46,10 @@ enum BookingStatus {
   CANCELLED
 }
 
+model ProcessedEvent {
+  id        String   @id @default(uuid())
+  eventKey  String   @unique
+  createdAt DateTime @default(now())
+}
+
+

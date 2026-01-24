@@ -7,6 +7,7 @@ import com.moviebooking.payment.event.PaymentEventPublisher;
 import com.moviebooking.payment.repository.PaymentRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
 import java.util.Random;
 
 @Service
@@ -22,6 +23,14 @@ public class PaymentService {
     }
 
     public Payment process(CreatePaymentRequest request) {
+    	
+    	Optional<Payment> existing =
+                repository.findByBookingId(request.getBookingId());
+    	
+    	if (existing.isPresent()) {
+            return existing.get(); 
+        }
+
         Payment payment = new Payment();
         payment.setBookingId(request.getBookingId());
         payment.setAmount(request.getAmount());
@@ -36,10 +45,10 @@ public class PaymentService {
         payment = repository.save(payment);
         
         PaymentEvent event = new PaymentEvent(
-                success ? "PAYMENT_SUCCEEDED" : "PAYMENT_FAILED",
-                payment.getBookingId(),
                 payment.getId(),
-                payment.getAmount()
+                payment.getBookingId(),
+                payment.getAmount(),
+                success ? "SUCCESS" : "FAILED"
         );
 
         publisher.publish(

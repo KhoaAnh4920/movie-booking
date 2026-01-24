@@ -6,76 +6,62 @@ import java.util.UUID;
 
 public class PaymentEvent {
 
-    private UUID eventId;
-    private String eventType;
-    private UUID bookingId;
     private UUID paymentId;
+    private UUID bookingId;
     private BigDecimal amount;
+    private String status;
     private OffsetDateTime occurredAt;
 
     public PaymentEvent(
-            String eventType,
-            UUID bookingId,
             UUID paymentId,
-            BigDecimal amount
+            UUID bookingId,
+            BigDecimal amount,
+            String status
     ) {
-        this.eventId = UUID.randomUUID();
-        this.eventType = eventType;
-        this.bookingId = bookingId;
         this.paymentId = paymentId;
+        this.bookingId = bookingId;
         this.amount = amount;
+        this.status = status;
         this.occurredAt = OffsetDateTime.now();
     }
 
-	public UUID getEventId() {
-		return eventId;
-	}
+    public UUID getPaymentId() {
+        return paymentId;
+    }
 
-	public void setEventId(UUID eventId) {
-		this.eventId = eventId;
-	}
+    public void setPaymentId(UUID paymentId) {
+        this.paymentId = paymentId;
+    }
 
-	public String getEventType() {
-		return eventType;
-	}
+    public UUID getBookingId() {
+        return bookingId;
+    }
 
-	public void setEventType(String eventType) {
-		this.eventType = eventType;
-	}
+    public void setBookingId(UUID bookingId) {
+        this.bookingId = bookingId;
+    }
 
-	public UUID getBookingId() {
-		return bookingId;
-	}
+    public BigDecimal getAmount() {
+        return amount;
+    }
 
-	public void setBookingId(UUID bookingId) {
-		this.bookingId = bookingId;
-	}
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
+    }
 
-	public UUID getPaymentId() {
-		return paymentId;
-	}
+    public String getStatus() {
+        return status;
+    }
 
-	public void setPaymentId(UUID paymentId) {
-		this.paymentId = paymentId;
-	}
+    public void setStatus(String status) {
+        this.status = status;
+    }
 
-	public BigDecimal getAmount() {
-		return amount;
-	}
+    public OffsetDateTime getOccurredAt() {
+        return occurredAt;
+    }
 
-	public void setAmount(BigDecimal amount) {
-		this.amount = amount;
-	}
-
-	public OffsetDateTime getOccurredAt() {
-		return occurredAt;
-	}
-
-	public void setOccurredAt(OffsetDateTime occurredAt) {
-		this.occurredAt = occurredAt;
-	}
-
-    // getters
-    
-    
+    public void setOccurredAt(OffsetDateTime occurredAt) {
+        this.occurredAt = occurredAt;
+    }
 }

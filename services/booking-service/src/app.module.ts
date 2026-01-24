@@ -5,6 +5,9 @@ import { AppService } from './app.service';
 import { BookingsModule } from './bookings/bookings.module';
 import { RedisModule } from './redis/redis.module';
 import { PrismaModule } from '../prisma/prisma.module';
+import { RabbitMqModule } from './rabbitmq/rabbitmq.module';
+import { PaymentsModule } from './payments/payments.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -12,9 +15,12 @@ import { PrismaModule } from '../prisma/prisma.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
+    ScheduleModule.forRoot(),
     PrismaModule,
     RedisModule,
     BookingsModule,
+    RabbitMqModule,
+    PaymentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
