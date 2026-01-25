@@ -1,161 +1,129 @@
-// import 'dotenv/config';
-// import { PrismaClient, MovieStatus, SeatType } from '@prisma/client';
-// import { PrismaPg } from '@prisma/adapter-pg';
+import 'dotenv/config';
+import { PrismaClient, BookingStatus } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 
-// if (!process.env.DATABASE_URL) {
-//   throw new Error('DATABASE_URL is not defined');
-// }
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL is not defined');
+}
 
-// const adapter = new PrismaPg({
-//   connectionString: process.env.DATABASE_URL,
-// });
+const adapter = new PrismaPg({
+  connectionString: process.env.DATABASE_URL,
+});
+const prisma = new PrismaClient({ adapter });
 
-// const prisma = new PrismaClient({ adapter });
+const catalogDbUrl = process.env.DATABASE_URL.replace(
+  'booking_db',
+  'catalog_db',
+);
 
-// async function main() {
-//   console.log('Seeding movie booking data...');
+const catalogPool = new Pool({
+  connectionString: catalogDbUrl,
+});
 
-//   const cinemas = await Promise.all([
-//     prisma.cinema.create({
-//       data: {
-//         name: 'CGV Landmark 81',
-//         city: 'TPHCM',
-//         address: 'Vinhomes Central Park, Binh Thanh',
-//       },
-//     }),
-//     prisma.cinema.create({
-//       data: {
-//         name: 'CGV Vincom Dong Khoi',
-//         city: 'TPHCM',
-//         address: '72 Le Thanh Ton, District 1',
-//       },
-//     }),
-//   ]);
+async function main() {
+  let showtimes: any[] = [];
+  try {
+    const res = await catalogPool.query('SELECT * FROM "Showtime" LIMIT 100');
+    showtimes = res.rows;
+  } catch (e) {
+    console.log('Error querying Showtime:', e);
+    try {
+      const res = await catalogPool.query('SELECT * FROM "showtime" LIMIT 100');
+      showtimes = res.rows;
+    } catch (e2) {
+      console.log('Error querying showtime:', e2);
+      return;
+    }
+  }
 
-//   const halls: { id: string }[] = [];
+  if (showtimes.length === 0) {
+    return;
+  }
 
-//   for (const cinema of cinemas) {
-//     for (let i = 1; i <= 2; i++) {
-//       const hall = await prisma.hall.create({
-//         data: {
-//           cinemaId: cinema.id,
-//           name: `Hall ${i}`,
-//           totalSeats: 50,
-//         },
-//       });
+  const users = [
+    'user-001',
+    'user-002',
+    'user-003',
+    'user-004',
+    'user-005',
+    'user-006',
+    'user-007',
+    'user-008',
+    'user-009',
+    'user-010',
+    'user-011',
+    'user-012',
+    'user-013',
+    'user-014',
+    'user-015',
+  ];
 
-//       halls.push(hall);
+  for (let i = 0; i < showtimes.length; i++) {
+    const showtime = showtimes[i];
 
-//       // Seat layout: A–E, 1–10
-//       const rows = ['A', 'B', 'C', 'D', 'E'];
+    for (let j = 0; j < 5; j++) {
+      let seats: any[] = [];
+      try {
+        const offset = i * 20 + j * 5;
+        const res = await catalogPool.query(
+          `SELECT * FROM "Seat" WHERE "hallId" = $1 LIMIT 5 OFFSET $2`,
+          [showtime.hallId, offset],
+        );
+        seats = res.rows;
+      } catch (e) {
+        console.log('Error querying Seat:', e);
+        continue;
+      }
 
-//       for (let r = 0; r < rows.length; r++) {
-//         for (let n = 1; n <= 10; n++) {
-//           await prisma.seat.create({
-//             data: {
-//               hallId: hall.id,
-//               rowCode: rows[r],
-//               seatNumber: n,
-//               gridRow: r,
-//               gridCol: n,
-//               type: n >= 9 ? SeatType.VIP : SeatType.STANDARD,
-//             },
-//           });
-//         }
-//       }
-//     }
-//   }
+      if (seats.length < 2) {
+        continue;
+      }
 
-//   /* =========================
-//    * 3️⃣ MOVIES
-//    * ========================= */
-//   const movies = await Promise.all([
-//     prisma.movie.create({
-//       data: {
-//         title: 'Interstellar',
-//         description: 'Sci-fi epic by Christopher Nolan',
-//         status: MovieStatus.NOW_SHOWING,
-//       },
-//     }),
-//     prisma.movie.create({
-//       data: {
-//         title: 'Inception',
-//         description: 'Dream within a dream',
-//         status: MovieStatus.NOW_SHOWING,
-//       },
-//     }),
-//   ]);
+      const bookingUser = users[(i + j) % users.length];
 
-//   /* =========================
-//    * 4️⃣ MOVIE VERSIONS
-//    * ========================= */
-//   const movieVersions: {
-//     id: string;
-//     movieId: string;
-//     versionType: string;
-//   }[] = [];
+      const booking = await prisma.booking.create({
+        data: {
+          userId: bookingUser,
+          showtimeId: showtime.id,
+          status:
+            Math.random() > 0.2
+              ? BookingStatus.CONFIRMED
+              : BookingStatus.PENDING,
+          totalAmount: 0,
+          tickets: {
+            create: seats
+              .slice(0, Math.floor(Math.random() * 3) + 1)
+              .map((seat) => ({
+                seatId: seat.id,
+                seatRow: seat.rowCode,
+                seatNumber: seat.seatNumber,
+                price: seat.type === 'VIP' ? 150000 : 100000,
+              })),
+          },
+        },
+        include: {
+          tickets: true,
+        },
+      });
 
-//   for (const movie of movies) {
-//     movieVersions.push(
-//       await prisma.movieVersion.create({
-//         data: {
-//           movieId: movie.id,
-//           versionType: '2D',
-//           durationMinutes: 150,
-//         },
-//       }),
-//     );
+      const total = booking.tickets.reduce(
+        (sum, t) => sum + Number(t.price),
+        0,
+      );
+      await prisma.booking.update({
+        where: { id: booking.id },
+        data: { totalAmount: total },
+      });
+    }
+  }
+}
 
-//     movieVersions.push(
-//       await prisma.movieVersion.create({
-//         data: {
-//           movieId: movie.id,
-//           versionType: 'IMAX',
-//           durationMinutes: 165,
-//         },
-//       }),
-//     );
-//   }
-
-//   /* =========================
-//    * 5️⃣ SHOWTIMES
-//    * ========================= */
-//   const baseDate = new Date('2026-01-25T08:00:00Z');
-
-//   let showtimeOffset = 0;
-
-//   for (const hall of halls) {
-//     for (const version of movieVersions) {
-//       const startTime = new Date(
-//         baseDate.getTime() + showtimeOffset * 60 * 60 * 1000,
-//       );
-//       const endTime = new Date(startTime.getTime() + 2.5 * 60 * 60 * 1000);
-
-//       await prisma.showtime.create({
-//         data: {
-//           hallId: hall.id,
-//           movieVersionId: version.id,
-//           startTime,
-//           endTime,
-//           priceConfig: {
-//             standard: version.versionType === 'IMAX' ? 120000 : 100000,
-//             vip: version.versionType === 'IMAX' ? 180000 : 150000,
-//           },
-//         },
-//       });
-
-//       showtimeOffset += 3;
-//     }
-//   }
-
-//   console.log('✅ Seed completed successfully');
-// }
-
-// main()
-//   .catch((e) => {
-//     console.error('Seed failed', e);
-//     process.exit(1);
-//   })
-//   .finally(async () => {
-//     await prisma.$disconnect();
-//   });
+main()
+  .catch(() => {
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+    await catalogPool.end();
+  });

@@ -26,6 +26,8 @@ async function bootstrap() {
   SwaggerModule.setup('docs', app, document);
 
   await app.listen(process.env.PORT ?? 8000);
+
+  console.log(`API Gateway is running on: ${await app.getUrl()}`);
 }
 
 void bootstrap();

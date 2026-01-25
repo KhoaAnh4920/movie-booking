@@ -16,6 +16,11 @@ export class AppController {
     return this.appService.getHello();
   }
 
+  @Get('health')
+  health() {
+    return { status: 'ok', service: 'catalog-service' };
+  }
+
   @Get('health/redis')
   async redisHealth() {
     const client = this.redisService.getClient();

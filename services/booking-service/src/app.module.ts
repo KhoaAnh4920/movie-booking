@@ -8,6 +8,7 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { RabbitMqModule } from './rabbitmq/rabbitmq.module';
 import { PaymentsModule } from './payments/payments.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { CatalogModule } from './catalog/catalog.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     BookingsModule,
     RabbitMqModule,
     PaymentsModule,
+    CatalogModule,
   ],
   controllers: [AppController],
   providers: [AppService],

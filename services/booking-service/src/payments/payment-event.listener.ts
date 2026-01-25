@@ -4,7 +4,6 @@ import {
   RabbitSubscribe,
   MessageHandlerErrorBehavior,
 } from '@golevelup/nestjs-rabbitmq';
-// import { ConsumeMessage } from 'amqplib'; // Removed
 import {
   PAYMENT_EXCHANGE,
   PAYMENT_QUEUE,
@@ -27,6 +26,12 @@ export class PaymentEventListener {
     exchange: PAYMENT_EXCHANGE,
     routingKey: [...PAYMENT_ROUTING_KEYS, 'payment.retry.back'],
     queue: PAYMENT_QUEUE,
+    queueOptions: {
+      arguments: {
+        'x-dead-letter-exchange': 'payment.retry',
+        'x-dead-letter-routing-key': 'retry',
+      },
+    },
     errorBehavior: MessageHandlerErrorBehavior.NACK,
   })
   async handle(event: PaymentEvent, msg: any) {

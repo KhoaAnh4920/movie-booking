@@ -22,7 +22,9 @@ async function bootstrap(): Promise<void> {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);
 
-  await app.listen(3000);
+  await app.listen(3001);
+
+  console.log(`Catalog service is running on: ${await app.getUrl()}`);
 }
 
 void bootstrap();
