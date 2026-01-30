@@ -49,10 +49,13 @@ services:
       context: ./gateway/api-gateway
     container_name: movie-api-gateway
     ports:
-      - "3000:3000"
+      - "8000:3000"
     depends_on:
       - postgres
       - rabbitmq
+    environment:
+      - CATALOG_SERVICE_URL=http://host.docker.internal:3001
+      - BOOKING_SERVICE_URL=http://host.docker.internal:3002
 
 volumes:
   postgres_data:

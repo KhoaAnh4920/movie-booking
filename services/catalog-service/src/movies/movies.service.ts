@@ -11,6 +11,11 @@ export class MoviesService {
       data: {
         title: dto.title,
         description: dto.description,
+        image: dto.image,
+        rating: dto.rating,
+        genres: dto.genres,
+        durationMinutes: dto.durationMinutes,
+        releaseDate: new Date(dto.releaseDate),
         status: dto.status,
       },
     });

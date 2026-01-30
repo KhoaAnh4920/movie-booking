@@ -17,6 +17,7 @@ export class MoviesController {
   @Get()
   @ApiOperation({ summary: 'List movies' })
   findAll() {
+    console.log('AAA');
     return this.moviesService.findAll();
   }
 

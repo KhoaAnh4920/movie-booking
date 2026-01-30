@@ -2,7 +2,7 @@ import { createProxyMiddleware } from 'http-proxy-middleware';
 import { ClientRequest, IncomingMessage } from 'http';
 
 export const bookingProxy = createProxyMiddleware({
-  target: 'http://localhost:3002',
+  target: process.env.BOOKING_SERVICE_URL || 'http://localhost:3002',
   changeOrigin: true,
   pathRewrite: {
     '^/api/bookings': '',

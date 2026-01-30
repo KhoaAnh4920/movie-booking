@@ -74,6 +74,11 @@ async function main() {
       data: {
         title: 'Interstellar',
         description: 'Sci-fi epic by Christopher Nolan',
+        image: '/testMovie.png', // Using placeholder from FE for now, normally would be a URL
+        rating: 4.8,
+        genres: ['Sci-Fi', 'Adventure', 'Drama'],
+        durationMinutes: 169,
+        releaseDate: new Date('2014-11-07'),
         status: MovieStatus.NOW_SHOWING,
       },
     }),
@@ -81,6 +86,23 @@ async function main() {
       data: {
         title: 'Inception',
         description: 'Dream within a dream',
+        image: '/testMovie.png',
+        rating: 4.9,
+        genres: ['Action', 'Sci-Fi', 'Thriller'],
+        durationMinutes: 148,
+        releaseDate: new Date('2010-07-16'),
+        status: MovieStatus.NOW_SHOWING,
+      },
+    }),
+    prisma.movie.create({
+      data: {
+        title: 'The Avengers',
+        description: "Earth's mightiest heroes must come together.",
+        image: '/hero.png', // Matches the hero image in FE
+        rating: 4.7,
+        genres: ['Action', 'Sci-Fi'],
+        durationMinutes: 143,
+        releaseDate: new Date('2012-05-04'),
         status: MovieStatus.NOW_SHOWING,
       },
     }),

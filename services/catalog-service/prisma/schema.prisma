@@ -8,9 +8,14 @@ datasource db {
 
 model Movie {
   id          String      @id @default(uuid())
-  title       String
-  description String?
-  status      MovieStatus
+  title           String
+  description     String?
+  image           String
+  rating          Float       @default(0)
+  genres          String[]
+  durationMinutes Int
+  releaseDate     DateTime
+  status          MovieStatus
 
   versions MovieVersion[]
 
