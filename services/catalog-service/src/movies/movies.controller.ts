@@ -26,4 +26,10 @@ export class MoviesController {
   findById(@Param('id') id: string) {
     return this.moviesService.findById(id);
   }
+
+  @Get(':id/showtimes')
+  @ApiOperation({ summary: 'Get showtimes for a movie' })
+  getShowtimes(@Param('id') id: string) {
+    return this.moviesService.findShowtimesByMovieId(id);
+  }
 }

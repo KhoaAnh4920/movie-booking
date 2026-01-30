@@ -38,4 +38,27 @@ export class MoviesService {
 
     return movie;
   }
+
+  async findShowtimesByMovieId(movieId: string) {
+    const movie = await this.findById(movieId);
+
+    return this.prisma.showtime.findMany({
+      where: {
+        movieVersion: {
+          movieId: movie.id,
+        },
+      },
+      include: {
+        movieVersion: true,
+        hall: {
+          include: {
+            cinema: true,
+          },
+        },
+      },
+      orderBy: {
+        startTime: 'asc',
+      },
+    });
+  }
 }
