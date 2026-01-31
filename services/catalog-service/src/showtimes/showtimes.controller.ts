@@ -13,6 +13,11 @@ export class ShowtimesController {
     return this.showtimesService.create(hallId, dto);
   }
 
+  @Get('showtimes/:id')
+  findOne(@Param('id') id: string) {
+    return this.showtimesService.findOne(id);
+  }
+
   @Get('movie-versions/:movieVersionId/showtimes')
   findByMovieVersion(@Param('movieVersionId') movieVersionId: string) {
     return this.showtimesService.findByMovieVersion(movieVersionId);
@@ -29,5 +34,18 @@ export class ShowtimesController {
     }
 
     return this.showtimesService.holdSeat(showtimeId, seatId, userId);
+  }
+
+  @Post('showtimes/:showtimeId/seats/:seatId/release')
+  releaseSeat(
+    @Param('showtimeId') showtimeId: string,
+    @Param('seatId') seatId: string,
+    @Headers('x-user-id') userId: string,
+  ) {
+    if (!userId) {
+      throw new Error('Missing x-user-id header');
+    }
+
+    return this.showtimesService.releaseSeat(showtimeId, seatId, userId);
   }
 }

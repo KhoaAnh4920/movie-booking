@@ -3,7 +3,20 @@ import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder, OpenAPIObject } from '@nestjs/swagger';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bodyParser: false });
+  app.enableCors({
+    origin: [
+      'http://localhost:3000',
+      'http://example.com',
+      'http://www.example.com',
+      'http://app.example.com',
+      'https://example.com',
+      'https://www.example.com',
+      'https://app.example.com',
+    ],
+    methods: ['GET', 'POST'],
+    credentials: true,
+  });
 
   const swaggerConfig: DocumentBuilder = new DocumentBuilder()
     .setTitle('Movie Booking API')

@@ -21,64 +21,135 @@ export class BookingsService {
   ) {}
 
   async create(dto: CreateBookingDto, userId: string) {
-    const { showtimeId, seatIds } = dto;
+    try {
+      const { showtimeId, seatIds } = dto;
 
-    if (!seatIds.length) {
-      throw new BadRequestException('Seat list is empty');
-    }
-
-    const redis = this.redisService.getClient();
-    const lockKeys: string[] = [];
-
-    for (const seatId of seatIds) {
-      const key = buildSeatLockKey(showtimeId, seatId);
-      const owner = await redis.get(key);
-
-      if (!owner) {
-        throw new ConflictException(`Seat ${seatId} is not held`);
+      if (!seatIds.length) {
+        throw new BadRequestException('Seat list is empty');
       }
 
-      if (owner !== userId) {
-        throw new ForbiddenException(`Seat ${seatId} is held by another user`);
+      const redis = this.redisService.getClient();
+      const lockKeys: string[] = [];
+
+      for (const seatId of seatIds) {
+        const key = buildSeatLockKey(showtimeId, seatId);
+        const owner = await redis.get(key);
+
+        if (!owner) {
+          throw new ConflictException(`Seat ${seatId} is not held`);
+        }
+
+        if (owner !== userId) {
+          throw new ForbiddenException(
+            `Seat ${seatId} is held by another user`,
+          );
+        }
+
+        lockKeys.push(key);
       }
 
-      lockKeys.push(key);
+      const quote = await this.catalogClient.quoteSeats(showtimeId, seatIds);
+
+      console.log('Check quote: ', quote);
+      const booking = await this.prisma.$transaction(async (tx) => {
+        // 1. Double check availability in DB (prevent race condition)
+        const existingTickets = await tx.ticket.findMany({
+          where: {
+            booking: {
+              showtimeId,
+              status: { in: ['PENDING', 'CONFIRMED'] },
+            },
+            seatId: { in: seatIds },
+          },
+        });
+
+        if (existingTickets.length > 0) {
+          throw new ConflictException(
+            `Seats ${existingTickets.map((t) => t.seatId).join(', ')} are already booked`,
+          );
+        }
+
+        // 2. Create Booking
+        const createdBooking = await tx.booking.create({
+          data: {
+            userId,
+            showtimeId,
+            status: 'PENDING',
+            totalAmount: quote.totalAmount,
+          },
+        });
+
+        await tx.ticket.createMany({
+          data: quote.seats.map((seat: any) => ({
+            bookingId: createdBooking.id,
+            seatId: seat.seatId,
+            seatRow: seat.row,
+            seatNumber: seat.number,
+            price: seat.price,
+          })),
+        });
+
+        return createdBooking;
+      });
+
+      await this.paymentClient.createPayment({
+        bookingId: booking.id,
+        amount: booking.totalAmount.toNumber(),
+        method: 'CARD',
+      });
+
+      await redis.del(...lockKeys);
+
+      return booking;
+    } catch (error) {
+      console.log('Error creating booking: ', error);
     }
+  }
 
-    const quote = await this.catalogClient.quoteSeats(showtimeId, seatIds);
-
-    const booking = await this.prisma.$transaction(async (tx) => {
-      const createdBooking = await tx.booking.create({
-        data: {
-          userId,
+  async getOccupiedSeats(showtimeId: string) {
+    // 1. Get confirmed/pending bookings from DB
+    const tickets = await this.prisma.ticket.findMany({
+      where: {
+        booking: {
           showtimeId,
-          status: 'PENDING',
-          totalAmount: quote.totalAmount,
+          status: { in: ['PENDING', 'CONFIRMED'] },
         },
-      });
-
-      await tx.ticket.createMany({
-        data: quote.seats.map((seat: any) => ({
-          bookingId: createdBooking.id,
-          seatId: seat.seatId,
-          seatRow: seat.row,
-          seatNumber: seat.number,
-          price: seat.price,
-        })),
-      });
-
-      return createdBooking;
+      },
+      select: { seatId: true },
     });
 
-    await this.paymentClient.createPayment({
-      bookingId: booking.id,
-      amount: booking.totalAmount.toNumber(),
-      method: 'CARD',
-    });
+    const dbSeatIds = tickets.map((t) => t.seatId);
 
-    await redis.del(...lockKeys);
+    // 2. Get held seats from Redis
+    const redis = this.redisService.getClient();
+    // Pattern: lock:showtime:{showtimeId}:seat:*
+    // We use SCAN to avoid blocking Redis if there are many keys (though distinct seat count is low)
+    const scanPattern = buildSeatLockKey(showtimeId, '*');
+    let cursor = '0';
+    const redisSeatIds: string[] = [];
 
-    return booking;
+    do {
+      const result = await redis.scan(
+        cursor,
+        'MATCH',
+        scanPattern,
+        'COUNT',
+        100,
+      );
+      cursor = result[0];
+      const keys = result[1];
+
+      keys.forEach((key) => {
+        // Key format: ...:seat:{seatId}
+        const parts = key.split(':seat:');
+        if (parts.length === 2) {
+          redisSeatIds.push(parts[1]);
+        }
+      });
+    } while (cursor !== '0');
+
+    // 3. Merge and return unique
+    return Array.from(new Set([...dbSeatIds, ...redisSeatIds]));
   }
 
   async confirmBooking(bookingId: string) {

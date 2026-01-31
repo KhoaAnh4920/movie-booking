@@ -6,4 +6,12 @@ export const catalogProxy = createProxyMiddleware({
   pathRewrite: {
     '^/api/catalog': '',
   },
+  on: {
+    proxyReq: (proxyReq, req) => {
+      const userId = req.headers['x-user-id'];
+      if (userId) {
+        proxyReq.setHeader('x-user-id', userId as string);
+      }
+    },
+  },
 });

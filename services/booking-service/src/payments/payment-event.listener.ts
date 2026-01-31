@@ -39,6 +39,9 @@ export class PaymentEventListener {
       this.logger.log(
         `Payment event received bookingId=${event.bookingId}, status=${event.status}`,
       );
+
+      // throw new Error('Simulated Processing Error for DLQ Test');
+
       const eventKey = `${event.bookingId}:${event.status}`;
 
       // Idempotency check

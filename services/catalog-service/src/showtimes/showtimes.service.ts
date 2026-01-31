@@ -66,6 +66,33 @@ export class ShowtimesService {
     });
   }
 
+  async findOne(id: string) {
+    const showtime = await this.prisma.showtime.findUnique({
+      where: { id },
+      include: {
+        movieVersion: {
+          include: {
+            movie: true,
+          },
+        },
+        hall: {
+          include: {
+            seats: {
+              orderBy: [{ rowCode: 'asc' }, { seatNumber: 'asc' }],
+            },
+            cinema: true,
+          },
+        },
+      },
+    });
+
+    if (!showtime) {
+      throw new NotFoundException('Showtime not found');
+    }
+
+    return showtime;
+  }
+
   async findByMovieVersion(movieVersionId: string) {
     return this.prisma.showtime.findMany({
       where: { movieVersionId },
@@ -179,13 +206,24 @@ export class ShowtimesService {
 
     const priceConfig = showtime.priceConfig as Record<string, number>;
 
-    const seats = showtime.hall.seats.map((seat) => ({
-      seatId: seat.id,
-      row: seat.rowCode,
-      number: seat.seatNumber,
-      type: seat.type,
-      price: priceConfig[seat.type],
-    }));
+    const seats = showtime.hall.seats.map((seat) => {
+      const typeKey = seat.type.toLowerCase();
+      const price = priceConfig[typeKey] || priceConfig[seat.type];
+
+      if (price === undefined) {
+        throw new Error(
+          `Price not found for seat type ${seat.type} in showtime ${showtimeId}`,
+        );
+      }
+
+      return {
+        seatId: seat.id,
+        row: seat.rowCode,
+        number: seat.seatNumber,
+        type: seat.type,
+        price: Number(price),
+      };
+    });
 
     const totalAmount = seats.reduce((sum, s) => sum + s.price, 0);
 

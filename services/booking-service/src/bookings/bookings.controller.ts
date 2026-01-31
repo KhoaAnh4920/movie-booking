@@ -1,7 +1,9 @@
 import {
   Body,
   Controller,
+  Get,
   Headers,
+  Param,
   Post,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -17,7 +19,7 @@ import { BookingsService } from './bookings.service';
 
 @ApiTags('Bookings')
 @ApiBearerAuth()
-@Controller('bookings')
+@Controller()
 export class BookingsController {
   constructor(private readonly bookingsService: BookingsService) {}
 
@@ -34,5 +36,10 @@ export class BookingsController {
     }
 
     return this.bookingsService.create(dto, userId);
+  }
+
+  @Get('showtime/:id/occupied')
+  getOccupiedSeats(@Param('id') showtimeId: string) {
+    return this.bookingsService.getOccupiedSeats(showtimeId);
   }
 }
