@@ -10,6 +10,7 @@ import { MoviesModule } from './movies/movies.module';
 import { RedisModule } from './redis/redis.module';
 import { ShowtimesModule } from './showtimes/showtimes.module';
 import { InternalModule } from './internal/internal.module';
+import { SearchModule } from './search/search.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { InternalModule } from './internal/internal.module';
     ShowtimesModule,
     RedisModule,
     InternalModule,
+    SearchModule,
   ],
   controllers: [AppController],
   providers: [AppService],

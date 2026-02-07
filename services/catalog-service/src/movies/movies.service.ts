@@ -1,13 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { CreateMovieDto } from './dto/create-movie.dto';
+import { SearchService } from 'src/search/search.service';
 
 @Injectable()
 export class MoviesService {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(
+    private readonly prisma: PrismaClient,
+    private readonly searchService: SearchService,
+  ) {}
 
   async create(dto: CreateMovieDto) {
-    return this.prisma.movie.create({
+    const movie = await this.prisma.movie.create({
       data: {
         title: dto.title,
         description: dto.description,
@@ -19,6 +23,18 @@ export class MoviesService {
         status: dto.status,
       },
     });
+
+    try {
+      await this.searchService.indexMovie(movie);
+    } catch (error) {
+      console.error('Failed to sync movie to ElasticSearch', error);
+    }
+
+    return movie;
+  }
+
+  async search(query: string) {
+    return this.searchService.searchMovies(query);
   }
 
   async findAll() {

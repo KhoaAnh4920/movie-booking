@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { MoviesService } from './movies.service';
 import { CreateMovieDto } from './dto/create-movie.dto';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
@@ -12,6 +12,12 @@ export class MoviesController {
   @ApiOperation({ summary: 'Create a movie' })
   create(@Body() dto: CreateMovieDto) {
     return this.moviesService.create(dto);
+  }
+
+  @Get('search')
+  @ApiOperation({ summary: 'Search movies' })
+  search(@Query('q') query: string) {
+    return this.moviesService.search(query);
   }
 
   @Get()

@@ -3,30 +3,37 @@ import {
   NestMiddleware,
   UnauthorizedException,
 } from '@nestjs/common';
-import { Request, Response, NextFunction } from 'express';
-import { AuthService } from './auth.service';
+import { Request, Response, NextFunction, RequestHandler } from 'express';
+import * as passport from 'passport';
+
+interface User {
+  userId?: string;
+  sub?: string;
+  email?: string;
+}
 
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {
-  constructor(private readonly authService: AuthService) {}
+  use(req: Request, res: Response, next: NextFunction) {
+    const handler = passport.authenticate(
+      'jwt',
+      { session: false },
+      (err: any, user: User, info: any) => {
+        if (err || !user) {
+          throw new UnauthorizedException(
+            (info as { message?: string })?.message || 'Unauthorized',
+          );
+        }
+        (req as unknown as { user: User }).user = user;
 
-  use(req: Request, _: Response, next: NextFunction) {
-    const authHeader = req.headers['authorization'];
-
-    if (!authHeader) {
-      throw new UnauthorizedException('Missing Authorization header');
-    }
-
-    const [, token] = authHeader.split(' ');
-
-    if (!token) {
-      throw new UnauthorizedException('Invalid Authorization format');
-    }
-
-    const { userId } = this.authService.validateToken(token);
-
-    req.headers['x-user-id'] = userId;
-
-    next();
+        // Also set x-user-id for downstream services
+        const userId = user.userId || user.sub;
+        if (userId) {
+          req.headers['x-user-id'] = userId;
+        }
+        next();
+      },
+    ) as unknown as RequestHandler;
+    handler(req, res, next);
   }
 }

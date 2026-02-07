@@ -26,6 +26,6 @@ import { RateLimitModule } from './rate-limit/rate-limit.module';
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(AuthMiddleware).forRoutes('/api');
+    consumer.apply(AuthMiddleware).forRoutes('/api/bookings');
   }
 }
